@@ -6,19 +6,14 @@ import io.pivotal.spike.escqrs.eventstore.Topic;
 import io.pivotal.spike.escqrs.support.Identity;
 import io.pivotal.spike.escqrs.support.IdentityGenerator;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Matt Stine
@@ -99,6 +94,19 @@ public class MovieRepositoryTest {
 		Optional<Movie> foundMovie = movieRepository.findById(movieId);
 
 		assertThat(foundMovie.isPresent()).isFalse();
+	}
+
+	@Test
+	public void canRetrieveMovieDeletedThenReadded() {
+		when(eventStore.eventsIn(topic)).thenReturn(Arrays.asList(
+				new MovieAddedEvent(new EventId(new Identity("foo")), movieId, "Pulp Fiction"),
+				new MovieRemovedEvent(new EventId(new Identity("bar")), movieId),
+				new MovieAddedEvent(new EventId(new Identity("baz")), movieId, "Pulp Fiction")
+		));
+
+		Optional<Movie> foundMovie = movieRepository.findById(movieId);
+
+		assertThat(foundMovie.isPresent()).isTrue();
 	}
 
 }
